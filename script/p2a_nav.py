@@ -6,22 +6,22 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import Quaternion, PoseWithCovarianceStamped
 import tf.transformations
 
-# def set_initial_pose(x, y, z=0.0):
-#     pub = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=1)
-#     rospy.sleep(1.0)
-#     msg = PoseWithCovarianceStamped()
-#     msg.header.frame_id = "map"
-#     msg.header.stamp = rospy.Time.now()
-#     msg.pose.pose.position.x = x
-#     msg.pose.pose.position.y = y
-#     q = tf.transformations.quaternion_from_euler(0, 0, math.radians(z))
-#     msg.pose.pose.orientation = Quaternion(*q)
-#     msg.pose.covariance[0] = 0.25
-#     msg.pose.covariance[7] = 0.25
-#     msg.pose.covariance[35] = 0.07
-#     pub.publish(msg)
-#     rospy.loginfo("Initial pose set!")
-#     rospy.sleep(2.0)
+def set_initial_pose(x, y, z=0.0):
+    pub = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=1)
+    rospy.sleep(1.0)
+    msg = PoseWithCovarianceStamped()
+    msg.header.frame_id = "map"
+    msg.header.stamp = rospy.Time.now()
+    msg.pose.pose.position.x = x
+    msg.pose.pose.position.y = y
+    q = tf.transformations.quaternion_from_euler(0, 0, math.radians(z))
+    msg.pose.pose.orientation = Quaternion(*q)
+    msg.pose.covariance[0] = 0.25
+    msg.pose.covariance[7] = 0.25
+    msg.pose.covariance[35] = 0.07
+    pub.publish(msg)
+    rospy.loginfo("Initial pose set!")
+    rospy.sleep(2.0)
 
 def make_goal(x, y, z=0.0):
     # MoveBaseGoal(): prebuild structure: Header: frame and timestamp; pose position: x,y,z,w
@@ -63,11 +63,11 @@ def main():
     # L2 = (0.98, 0.95)
     # L3 = (1.1, -0.1)
     L1 = (0.0, 0.0)
-    L2 = (0.5, 0.0)
-    L3 = (0.0, 0.5)
+    L2 = (1.0, 0.0)
+    L3 = (0.0, 1.0)
     # ---------------------------------
 
-    # set_initial_pose(L1[0], L1[1])
+    set_initial_pose(L1[0], L1[1])
     navigate_to(client, L1[0], L1[1], "L1 (start)")
     rospy.sleep(1.0)
     navigate_to(client, L2[0], L2[1], "L2")
