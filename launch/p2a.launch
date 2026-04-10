@@ -1,20 +1,18 @@
 <launch>
   <arg name="map_file" default="$(find p2_chang)/misc/my_map.yaml"/>
 
-  <node name="map_server"
-      pkg="map_server"
-      type="map_server"
-      args="$(arg map_file)"
-      output="screen"/>
+  <!-- Start navigation stack with your map -->
+  <include file="$(find turtlebot_navigation)/launch/amcl_demo.launch">
+    <arg name="map_file" value="$(arg map_file)"/>
+  </include>
 
-  <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
-  <include file="$(find turtlebot3_navigation)/launch/move_base.launch"/>
-
+  <!-- Visualization -->
+  <include file="$(find turtlebot_rviz_launchers)/launch/view_navigation.launch"/>
 
   <!-- Run navigation script after everything is ready -->
   <node name="p2a_navi"
-      pkg="p2_chang"
-      type="p2a_nav.py"
-      output="screen"
-      launch-prefix="bash -c 'sleep 10; $0 $@'"/>
+        pkg="p2_chang"
+        type="p2a_nav.py"
+        output="screen"
+        launch-prefix="bash -c 'sleep 15; $0 $@'"/>
 </launch>
