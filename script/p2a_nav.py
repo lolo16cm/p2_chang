@@ -58,13 +58,13 @@ def main():
     rospy.loginfo("Connected to move_base!")
 
     # ---- DEFINE L1, L2, L3 HERE ----
-    # L1 is the starter point; L2 is the middle point; L3 is the end; then return to L1
+    # L1 is the starter point; L2 is the middle point; L3 isslaunch p2_chang p2a.launch the end; then return to L1
     # L1 = (-0.052, -0.335)
     # L2 = (0.98, 0.95)
     # L3 = (1.1, -0.1)
-    L1 = (0.0, 0.0)
-    L2 = (1.0, 0.0)
-    L3 = (0.0, 1.0)
+    L1 = (0.213, 0.144)
+    L2 = (4.21, 1.16)
+    L3 = (1.65, -3.84)
     # ---------------------------------
 
     set_initial_pose(L1[0], L1[1])

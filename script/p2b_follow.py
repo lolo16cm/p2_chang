@@ -11,11 +11,9 @@ class BallFollower:
     def __init__(self):
         self.bridge = CvBridge()
 
-        # ── Publishers ──
         self.cmd_pub   = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size=1)
         self.image_pub = rospy.Publisher('/image_converter/output_video', Image, queue_size=1)
 
-        # ── Subscribers (rgb + depth) ──
         rospy.Subscriber('/camera/color/image_raw', Image, self.rgb_callback)
         rospy.Subscriber('/camera/depth/image_raw', Image, self.depth_callback)
 
@@ -25,29 +23,21 @@ class BallFollower:
         self.front_dist  = None
         self.depth_image = None
 
-        self.target_dist = 1.0   # 1 meter = 3 feet
-        self.tolerance   = 0.1   # +/- 10cm
+        self.target_dist = 1.1
+        self.tolerance   = 0.05
 
         rospy.loginfo("Ball Follower Started!")
 
-    # ────────────────────────────────────────────
-    # DEPTH CALLBACK
-    # ────────────────────────────────────────────
     def depth_callback(self, msg):
         try:
-            # Try 16UC1 (millimeters) — Astra default
             depth_raw = self.bridge.imgmsg_to_cv2(msg, '16UC1')
             self.depth_image = depth_raw.astype(np.float32) / 1000.0
         except:
             try:
-                # Fallback to 32FC1 (meters)
                 self.depth_image = self.bridge.imgmsg_to_cv2(msg, '32FC1')
             except Exception as e:
                 rospy.logerr("Depth error: %s", str(e))
 
-    # ────────────────────────────────────────────
-    # RGB CALLBACK
-    # ────────────────────────────────────────────
     def rgb_callback(self, msg):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -84,15 +74,17 @@ class BallFollower:
         if contours:
             c = max(contours, key=cv2.contourArea)
             ((x, y), radius) = cv2.minEnclosingCircle(c)
+            area = cv2.contourArea(c)
 
-            if radius > 10:
+            # circularity check — 1.0 = perfect circle
+            circularity = area / (3.14159 * radius * radius) if radius > 0 else 0
+
+            if radius > 20 and circularity > 0.6:
                 self.ball_col  = int(x)
                 self.ball_row  = int(y)
                 self.ball_size = radius
 
-                # ── Get depth at ball pixel ──
                 if self.depth_image is not None:
-                    # sample average of 5x5 area around ball center for stability
                     y1 = max(0, int(y) - 2)
                     y2 = min(self.depth_image.shape[0], int(y) + 2)
                     x1 = max(0, int(x) - 2)
@@ -132,9 +124,6 @@ class BallFollower:
 
         self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, 'bgr8'))
 
-    # ────────────────────────────────────────────
-    # FOLLOW LOOP
-    # ────────────────────────────────────────────
     def follow(self):
         rate      = rospy.Rate(10)
         img_width = 640
@@ -143,7 +132,6 @@ class BallFollower:
             twist = Twist()
 
             if self.ball_col is not None:
-                # Turn toward ball center
                 error = self.ball_col - img_width // 2
                 twist.angular.z = -float(error) / 300.0
 
@@ -151,23 +139,18 @@ class BallFollower:
                     dist_error = self.front_dist - self.target_dist
 
                     if dist_error > self.tolerance:
-                        # too far — move forward
                         twist.linear.x = min(0.2, dist_error * 0.4)
                     elif dist_error < -self.tolerance:
-                        # too close — move back
                         twist.linear.x = max(-0.2, dist_error * 0.4)
                     else:
-                        # within 10cm of 1 meter — stop
                         twist.linear.x = 0.0
 
                     rospy.loginfo("dist: %.2fm | error: %.2fm | col: %d",
                                   self.front_dist, dist_error, self.ball_col)
                 else:
-                    # ball visible but no depth — creep forward
                     twist.linear.x = 0.05
                     rospy.loginfo("Ball col: %d | no depth", self.ball_col)
             else:
-                # no ball — stop
                 twist.linear.x  = 0.0
                 twist.angular.z = 0.0
                 rospy.loginfo("No ball detected, stopping...")
