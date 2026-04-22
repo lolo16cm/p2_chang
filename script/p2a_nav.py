@@ -6,7 +6,8 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import Quaternion, PoseWithCovarianceStamped
 import tf.transformations
 
-def set_initial_pose(x, y, z=0.0):
+def set_initial_pose(x, y, z=0.0): #set the initial:same as clicking 2D Pose Estimate in RViz manually
+    #/initialpose is a built-in ROS topic AMCL automatically subscribes to;same topic that RViz's 2D Pose Estimate button 
     pub = rospy.Publisher('/initialpose', PoseWithCovarianceStamped, queue_size=1)
     rospy.sleep(1.0)
     msg = PoseWithCovarianceStamped()
@@ -14,8 +15,11 @@ def set_initial_pose(x, y, z=0.0):
     msg.header.stamp = rospy.Time.now()
     msg.pose.pose.position.x = x
     msg.pose.pose.position.y = y
+    #Converts degrees → quaternion for the robot's facing direction
     q = tf.transformations.quaternion_from_euler(0, 0, math.radians(z))
+    #Sets which direction the robot is facing.
     msg.pose.pose.orientation = Quaternion(*q)
+    #Standard default values.tells AMCL how confident we are about the initial pose. 
     msg.pose.covariance[0] = 0.25
     msg.pose.covariance[7] = 0.25
     msg.pose.covariance[35] = 0.07
@@ -46,8 +50,10 @@ def navigate_to(client, x, y, label, z=0.0):
     state = client.get_state()
     if state == actionlib.GoalStatus.SUCCEEDED:
         rospy.loginfo(f"Reached {label}!")
+        return True
     else:
         rospy.logwarn(f"Failed to reach {label}, state: {state}")
+        return False
 
 def main():
     rospy.init_node('p2a_navi')
@@ -58,24 +64,34 @@ def main():
     rospy.loginfo("Connected to move_base!")
 
     # ---- DEFINE L1, L2, L3 HERE ----
-    # L1 is the starter point; L2 is the middle point; L3 isslaunch p2_chang p2a.launch the end; then return to L1
-    # L1 = (-0.052, -0.335)
-    # L2 = (0.98, 0.95)
-    # L3 = (1.1, -0.1)
     L1 = (0.246, -0.429)
     L2 = (4.22, 0.37)
     L3 = (2.4, -1.15)
     # ---------------------------------
 
     set_initial_pose(L1[0], L1[1])
-    navigate_to(client, L1[0], L1[1], "L1 (start)")
+
+    success = True
+
+    if not navigate_to(client, L1[0], L1[1], "L1 (start)"):
+        success = False
     rospy.sleep(1.0)
-    navigate_to(client, L2[0], L2[1], "L2")
+
+    if not navigate_to(client, L2[0], L2[1], "L2"):
+        success = False
     rospy.sleep(1.0)
-    navigate_to(client, L3[0], L3[1], "L3")
+
+    if not navigate_to(client, L3[0], L3[1], "L3"):
+        success = False
     rospy.sleep(1.0)
-    navigate_to(client, L1[0], L1[1], "L1 (return)")
-    rospy.loginfo("Mission complete: L1 → L2 → L3 → L1")
+
+    if not navigate_to(client, L1[0], L1[1], "L1 (return)"):
+        success = False
+
+    if success:
+        rospy.loginfo("Mission complete: L1 → L2 → L3 → L1")
+    else:
+        rospy.logerr("Mission failed! Some waypoints not reached.")
 
 if __name__ == '__main__':
     try:
