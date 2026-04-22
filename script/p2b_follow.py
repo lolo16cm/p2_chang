@@ -45,7 +45,7 @@ class BallFollower:
             rospy.logerr("RGB error: %s", str(e))
             return
 
-        # ── Find most-red pixel ──
+        # Find most-red pixel
         b = cv_image[:, :, 0].astype(np.int32)
         g = cv_image[:, :, 1].astype(np.int32)
         r = cv_image[:, :, 2].astype(np.int32)
@@ -55,7 +55,7 @@ class BallFollower:
         best_row = min_idx[0]
         best_col = min_idx[1]
 
-        # ── HSV masking for red ball ──
+        # HSV masking for red ball
         hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
 
         lower_r1 = np.array([0,   100, 100])
@@ -67,11 +67,11 @@ class BallFollower:
             cv2.inRange(hsv, lower_r1, upper_r1),
             cv2.inRange(hsv, lower_r2, upper_r2))
 
-        # ── Find contours ──
+        # Find contours
         contours, _ = cv2.findContours(
             mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        if contours:
+        if contours: #find the circular shape
             c = max(contours, key=cv2.contourArea)
             ((x, y), radius) = cv2.minEnclosingCircle(c)
             area = cv2.contourArea(c)
@@ -80,7 +80,6 @@ class BallFollower:
             circularity = area / (3.14159 * radius * radius) if radius > 0 else 0
 
             # radius in pixels: ball is 15cm diameter, at 1m distance ~50px radius
-            # require circularity > 0.6 and radius > 25px (roughly 15cm ball)
             if circularity > 0.4 and radius > 25:
                 self.ball_col  = int(x)
                 self.ball_row  = int(y)
@@ -110,10 +109,10 @@ class BallFollower:
             self.ball_size  = None
             self.front_dist = None
 
-        # ── Draw red dot at most-red pixel ──
+        # red dot at most-red pixel 
         cv2.circle(cv_image, (best_col, best_row), 10, (0, 0, 255), 2)
 
-        # ── Draw info text ──
+        # text notification
         dist_text = "{:.2f}m".format(self.front_dist) if self.front_dist else "N/A"
         size_text = "{:.1f}px".format(self.ball_size) if self.ball_size else "N/A"
 
