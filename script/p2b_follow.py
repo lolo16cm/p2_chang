@@ -23,7 +23,7 @@ class BallFollower:
         self.front_dist  = None
         self.depth_image = None
 
-        self.target_dist = 1.1
+        self.target_dist = 1.0
         self.tolerance   = 0.05
 
         rospy.loginfo("Ball Follower Started!")
@@ -79,7 +79,9 @@ class BallFollower:
             # circularity check — 1.0 = perfect circle
             circularity = area / (3.14159 * radius * radius) if radius > 0 else 0
 
-            if radius > 20 and circularity > 0.6:
+            # radius in pixels: ball is 15cm diameter, at 1m distance ~50px radius
+            # require circularity > 0.6 and radius > 25px (roughly 15cm ball)
+            if circularity > 0.4 and radius > 25:
                 self.ball_col  = int(x)
                 self.ball_row  = int(y)
                 self.ball_size = radius
@@ -139,9 +141,9 @@ class BallFollower:
                     dist_error = self.front_dist - self.target_dist
 
                     if dist_error > self.tolerance:
-                        twist.linear.x = min(0.2, dist_error * 0.4)
+                        twist.linear.x = min(0.4, dist_error * 0.4)
                     elif dist_error < -self.tolerance:
-                        twist.linear.x = max(-0.2, dist_error * 0.4)
+                        twist.linear.x = max(-0.4, dist_error * 0.4)
                     else:
                         twist.linear.x = 0.0
 
