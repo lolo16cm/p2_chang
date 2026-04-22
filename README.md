@@ -1,14 +1,14 @@
 # p2_chang
 
 ## Name
-- Carol Chang
+- Carolyn Chang
 
 ## How to Run
 
 ### Part 1 — Autonomous Navigation
+video: 
+https://drive.google.com/file/d/1Z5hM9TWt8FfIUSvoOSN9uFCpVOT_Hj-t/view?usp=sharing
 ```
-video: https://drive.google.com/file/d/1Z5hM9TWt8FfIUSvoOSN9uFCpVOT_Hj-t/view?usp=sharing
-
 terminal 1:
 roslaunch turtlebot_bringup minimal.launch --screen
 
@@ -20,11 +20,9 @@ roslaunch p2_chang p2a.launch
 ```
 
 ### Part 2 — Ball Follower (primary RGB)
-```
 video:
 https://drive.google.com/file/d/1cxSsY_iUO0lGJYEFl-wQ5E5Io7sDcCHz/view?usp=sharing
-
-
+```
 terminal 1:
 roslaunch turtlebot_bringup minimal.launch --screen
 
